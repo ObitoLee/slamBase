@@ -13,3 +13,6 @@ ADD_LIBRARY(slambase slamBase.cpp)
 # 生成可执行文件并链接库
 ADD_EXECUTABLE(generate_pointcloud generatePointCloud.cpp)
 TARGET_LINK_LIBRARIES(generate_pointcloud slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})
+
+ADD_EXECUTABLE(feature_detect detectFeatures.cpp)
+TARGET_LINK_LIBRARIES(feature_detect slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})

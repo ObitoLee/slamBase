@@ -48,8 +48,9 @@ struct FRAME
 // PnP 结果
 struct RESULT_OF_PNP
 {
-    cv::Mat rvec, tvec;
+    Mat rvec, tvec;
     int inliers;
+	Mat imgMatches;
 };
 
 // computeKeyPointsAndDesp 同时提取关键点与特征描述子
@@ -57,14 +58,14 @@ void computeKeyPointsAndDesp( FRAME& frame, string detector, string descriptor )
 
 // estimateMotion 计算两个帧之间的运动
 // 输入：帧1和帧2, 相机内参
-RESULT_OF_PNP estimateMotion( FRAME& frame1, FRAME& frame2, CAMERA_INTRINSIC_PARAMETERS& camera );
+RESULT_OF_PNP estimateMotion( FRAME& frame1, FRAME& frame2, CAMERA_INTRINSIC_PARAMETERS& camera ,double goodMatchThreshold);
 
 
 // 参数读取类
 class ParameterReader
 {
 public:
-    ParameterReader( string filename="./parameters.txt" )
+    ParameterReader( string filename="./data/parameters.txt" )
     {
         ifstream fin( filename.c_str() );
         if (!fin)
@@ -82,6 +83,7 @@ public:
             int pos = str.find("=");
             if (pos == -1)
                 continue;
+
             string key = str.substr( 0, pos );
             string value = str.substr( pos+1, str.length() );
             data[key] = value;

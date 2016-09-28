@@ -1,5 +1,5 @@
 # 增加PCL库的依赖
-FIND_PACKAGE(PCL REQUIRED COMPONENTS common io)
+FIND_PACKAGE(PCL REQUIRED COMPONENTS common io visualization)
 
 # 增加opencv的依赖
 FIND_PACKAGE(OpenCV REQUIRED)
@@ -15,5 +15,8 @@ ADD_LIBRARY(slambase slamBase.cpp)
 # ADD_EXECUTABLE(generate_pointcloud generatePointCloud.cpp)
 # TARGET_LINK_LIBRARIES(generate_pointcloud slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})
 
-ADD_EXECUTABLE(feature_detect detectFeatures.cpp)
-TARGET_LINK_LIBRARIES(feature_detect slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})
+#ADD_EXECUTABLE(feature_detect detectFeatures.cpp)
+#TARGET_LINK_LIBRARIES(feature_detect slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})
+
+ADD_EXECUTABLE(join_PointCloud joinPointCloud.cpp)
+TARGET_LINK_LIBRARIES(join_PointCloud slambase ${OpenCV_LIBS} ${PCL_LIBRARIES})

@@ -1,0 +1,6 @@
+/lib
+/build
+/bin
+/data/depth_png
+/data/rgb_png
+*.pcd

@@ -9,24 +9,12 @@ using namespace std;
 
 #include "slamBase.h"
 
-#include <opencv2/core/eigen.hpp>
-
-#include <pcl/common/transforms.h>
-#include <pcl/visualization/cloud_viewer.h>
-
-// Eigen !
-#include <Eigen/Core>
-#include <Eigen/Geometry>
-
 static ParameterReader cfg;
-CAMERA_INTRINSIC_PARAMETERS camera={	atof( cfg.getData( "camera.cx" ).c_str() ),
-								atof( cfg.getData( "camera.cy" ).c_str() ),
-								atof( cfg.getData( "camera.fx" ).c_str() ),
-								atof( cfg.getData( "camera.fy" ).c_str() ),
-								atof( cfg.getData( "camera.scale" ).c_str() )};
+CAMERA_INTRINSIC_PARAMETERS camera = getDefaultCamera(cfg);
 double goodMatchThreshold = atof( cfg.getData( "good_match_threshold" ).c_str() );
 string detector = cfg.getData("detector");
 string descriptor = cfg.getData("descriptor");
+double gridsize = atof(cfg.getData("voxel_grid").c_str() );
 
 int main( )
 {
@@ -48,34 +36,13 @@ int main( )
     RESULT_OF_PNP result = estimateMotion( frame1, frame2, camera ,goodMatchThreshold);
     cout<<"PnP result:"<<endl<<result.rvec<<endl<<result.tvec<<endl;
 
-    // 处理result
-    // 将旋转向量转化为旋转矩阵
-    Mat R;
-    cv::Rodrigues( result.rvec, R );
-    Eigen::Matrix3d r;
-    cv::cv2eigen(R, r);
-  
-    // 将平移向量和旋转矩阵转换成变换矩阵
-    Eigen::Isometry3d T = Eigen::Isometry3d::Identity();
-
-    Eigen::AngleAxisd angle(r);
-    cout<<"translation"<<endl;
-    //Eigen::Translation<double,3> trans(result.tvec.at<double>(0,0), result.tvec.at<double>(0,1), result.tvec.at<double>(0,2));
-    T = angle;
-    T(0,3) = result.tvec.at<double>(0,0); 
-    T(1,3) = result.tvec.at<double>(0,1); 
-    T(2,3) = result.tvec.at<double>(0,2);
+    // 处理result,将旋转向量转化为旋转矩阵,将平移向量和旋转矩阵转换成变换矩阵
+    Eigen::Isometry3d T = cvMat2Eigen(result.rvec,result.tvec);
 
     // 转换点云
-    cout<<"converting image to clouds"<<endl;
     PointCloud::Ptr cloud1 = image2PointCloud( frame1.rgb, frame1.depth, camera );
-    PointCloud::Ptr cloud2 = image2PointCloud( frame2.rgb, frame2.depth, camera );
-
     // 合并点云
-    cout<<"combining clouds"<<endl;
-    PointCloud::Ptr output (new PointCloud());
-    pcl::transformPointCloud( *cloud1, *output, T.matrix() );
-    *output += *cloud2;
+    PointCloud::Ptr output = joinPointCloud(cloud1,frame2,T,camera,gridsize);
     pcl::io::savePCDFile("data/result.pcd", *output);
     cout<<"Final result saved."<<endl;
 

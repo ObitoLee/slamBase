@@ -1,5 +1,5 @@
 # 增加PCL库的依赖
-FIND_PACKAGE(PCL REQUIRED COMPONENTS common io visualization)
+FIND_PACKAGE(PCL REQUIRED COMPONENTS common io visualization filters)
 
 # 增加opencv的依赖
 FIND_PACKAGE(OpenCV REQUIRED)

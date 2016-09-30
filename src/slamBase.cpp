@@ -156,3 +156,55 @@ RESULT_OF_PNP estimateMotion( FRAME& frame1, FRAME& frame2, CAMERA_INTRINSIC_PAR
 
     return result;
 }
+
+// cvMat2Eigen
+Eigen::Isometry3d cvMat2Eigen( cv::Mat& rvec, cv::Mat& tvec )
+{
+    cv::Mat R;
+    cv::Rodrigues( rvec, R );
+    Eigen::Matrix3d r;
+    cv::cv2eigen(R, r);
+  
+    // 将平移向量和旋转矩阵转换成变换矩阵
+    Eigen::Isometry3d T = Eigen::Isometry3d::Identity();
+
+    Eigen::AngleAxisd angle(r);
+    Eigen::Translation<double,3> trans(tvec.at<double>(0,0), tvec.at<double>(0,1), tvec.at<double>(0,2));
+    T = angle;
+    T(0,3) = tvec.at<double>(0,0); 
+    T(1,3) = tvec.at<double>(0,1); 
+    T(2,3) = tvec.at<double>(0,2);
+    return T;
+}
+
+// joinPointCloud
+// 输入：原始点云，新来的帧以及它的位姿
+// 输出：将新来帧加到原始帧后的图像
+PointCloud::Ptr joinPointCloud(PointCloud::Ptr original,FRAME& newFrame,Eigen::Isometry3d T,CAMERA_INTRINSIC_PARAMETERS& camera,double gridsize) 
+{
+    PointCloud::Ptr newCloud = image2PointCloud(newFrame.rgb, newFrame.depth, camera);
+
+    // 合并点云
+    PointCloud::Ptr output (new PointCloud());
+    pcl::transformPointCloud( *original, *output, T.matrix() );
+    *newCloud += *output;
+
+    // Voxel grid 滤波降采样
+    static pcl::VoxelGrid<PointT> voxel;
+    voxel.setLeafSize( gridsize, gridsize, gridsize );
+    voxel.setInputCloud( newCloud );
+    PointCloud::Ptr tmp( new PointCloud() );
+    voxel.filter( *tmp );
+    return tmp;
+}
+
+CAMERA_INTRINSIC_PARAMETERS getDefaultCamera(ParameterReader pd)
+{
+	CAMERA_INTRINSIC_PARAMETERS camera;
+    camera.fx = atof( pd.getData( "camera.fx" ).c_str());
+    camera.fy = atof( pd.getData( "camera.fy" ).c_str());
+    camera.cx = atof( pd.getData( "camera.cx" ).c_str());
+    camera.cy = atof( pd.getData( "camera.cy" ).c_str());
+    camera.scale = atof( pd.getData( "camera.scale" ).c_str() );
+    return camera;
+}
